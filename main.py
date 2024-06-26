@@ -1,83 +1,56 @@
 from typing import Union,Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, status
+
 from pydantic import BaseModel 
 
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+
+# Create a sqlite engine instance
+engine = create_engine("sqlite:///question.db")
+
+# Create a DeclarativeMeta instance
+Base = declarative_base()
+
+
+# Define To Do class inheriting from Base
+class Question(Base):
+    __tablename__ = 'questions'
+    id = Column(Integer, primary_key=True)
+    content =  Column(String(50))
+
+# Create the database
+Base.metadata.create_all(engine)
+
+# Initialize app
 app = FastAPI()
 
 
-
-class New(BaseModel):
-    name : str
-    clas: str
-    age : int
-
-
-class NewUpdate(BaseModel):
-    name : Optional[str] = None
-    clas: Optional[str] = None
-    age : Optional[int] = None
-
-
-
-students={
-    1:{
-        "name" : "rim",
-        "clas": "indp1d",
-        "age" :21,
-    }
-
-}
-
-
 @app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
-
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return students[item_id]
-
-
-@app.get("/test")
-def testilna(grade:int ,nom: Union[str, None] = None):
-    for student_id in Students:
-        if students[student_id].name==nom:
-            return Students[student_id]
-    return{"data":"not found"}
+def root():
+    return "Hello in my app"
 
 
 
-@app.put("/item/{item_id}")
-def update_item(item_id:int,item:NewUpdate):
-    if item_id not in students :
-        return{"error":"id "}
-    if item.name != None:
-        students[item_id].name = item.name
-    if item.clas != None:
-        students[item_id].clas = item.clas
-    if item.age != None:
-        students[item_id].age = item.age
-
-    
+@app.post("/q", status_code=status.HTTP_201_CREATED)
+def create_question():
+    return "create Question item"
 
 
+@app.get("/q/{id}")
+def read_question(id: int):
+    return "read question item with id {id}"
 
 
-@app.post("/create_student/{student_id}")
-def createstudent(student_id:int,student:New):
-    if student_id in students :
-        return{"error":"id exist"}
-    students[student_id]=student
-    return
-    students[students_id]
+@app.put("/q/{id}")
+def update_question(id: int):
+    return "update question item with id {id}"
 
+@app.delete("/q/{id}")
+def delete_question(id: int):
+    return "delete question item with id {id}"
 
-
-@app.delete("/delete-student/{student_id}")
-def delete_student(student_id:int):
-    if student_id not in students :
-        return{"Erro":"student does not exist"}
-    del students[student_id]
-    return{"Message":"student deleted successfully"}
+@app.get("/todo")
+def read_todo_list():
+    return "read question list"
