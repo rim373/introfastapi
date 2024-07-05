@@ -1,152 +1,82 @@
 from typing import Union,Optional,List
 from fastapi import FastAPI, status , Depends
 from pydantic import BaseModel 
-from sqlalchemy import create_engine, Column, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Session,sessionmaker
-from fastapi import HTTPException
 
-#from database import Base, engine , Question
-
-
-
-
-
-class QuestionRequest(BaseModel):
-    content: str
-    class Config:
-        orm_mode = True
-
-
-
-
-
-# Create a sqlite engine instance
-engine = create_engine("sqlite:///question.db")
-
-# Create a DeclarativeMeta instance
-Base = declarative_base()
-
-# Define To Do class inheriting from Base
-class Question(Base):
-    __tablename__ = 'questions'
-    id = Column(Integer, primary_key=True)
-    content =  Column(String(50))
-
-# Create the database
-Base.metadata.create_all(engine)
-
-
-
-
-
-# Create SessionLocal class from sessionmaker factory
-SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
-
-
-
-
-# Initialize app
 app = FastAPI()
 
 
 
+class New(BaseModel):
+    name : str
+    clas: str
+    age : int
 
-@app.get("/",response_model = List[QuestionRequest])
-def read_all_questions():
-     # create a new database session
-    session = SessionLocal()
 
-    # get all todo items
-    question_list = session.query(Question).all()
-
-    # close the session
-    session.close()
-
-    return question_list
+class NewUpdate(BaseModel):
+    name : Optional[str] = None
+    clas: Optional[str] = None
+    age : Optional[int] = None
 
 
 
-@app.get("/q/{id}", response_model=QuestionRequest)
-def read_question(id: int):
-     # create a new database session
-    session = SessionLocal()
+students={
+    1:{
+        "name" : "rim",
+        "clas": "indp1d",
+        "age" :21,
+    }
 
-    # get the quetions item with the given id
-    question = session.query(Question).get(id)
-
-    # close the session
-    session.close()
-
-    if not question:
-        raise HTTPException(status_code=404, detail=f"the question with id {id} not found")
-
-    return f" The question number: {question.id} is: {question.content}"
+}
 
 
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
 
-@app.post("/q",response_model=QuestionRequest, status_code=status.HTTP_201_CREATED)
-def create_question(q:QuestionRequest):
-      # create a new database session
-    session = SessionLocal()
 
-    # create an instance of the ToDo database model
-    qdb = Question(content = q.content)
+@app.get("/items/{item_id}")
+def read_item(item_id: int, q: Union[str, None] = None):
+    return students[item_id]
 
-    # add it to the session and commit it
-    session.add(qdb)
-    session.commit()
-    session.refresh(qdb)
 
-    # close the session
-    session.close()
+@app.get("/test")
+def testilna(grade:int ,nom: Union[str, None] = None):
+    for student_id in Students:
+        if students[student_id].name==nom:
+            return Students[student_id]
+    return{"data":"not found"}
 
-    # return the id
-    return qdb
+
+
+@app.put("/item/{item_id}")
+def update_item(item_id:int,item:NewUpdate):
+    if item_id not in students :
+        return{"error":"id "}
+    if item.name != None:
+        students[item_id].name = item.name
+    if item.clas != None:
+        students[item_id].clas = item.clas
+    if item.age != None:
+        students[item_id].age = item.age
+
     
-   
-
-@app.put("/q/{id}")
-def update_question(id: int, content: str):
-
-    # create a new database session
-    session = SessionLocal()
-
-    # get the question item with the given id
-    question = session.query(Question).get(id)
-
-    # update question item with the given task (if an item with the given id was found)
-    if question:
-        question.content = content
-        session.commit()
-
-    # close the session
-    session.close()
-
-    # check if quetion item with given id exists. If not, raise exception and return 404 not found response
-    if not question:
-        raise HTTPException(status_code=404, detail=f"question item with id {id} not found")
-
-    return quetion
 
 
 
-@app.delete("/q/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_quetion(id: int):
 
-    # create a new database session
-    session = SessionLocal()
+@app.post("/create_student/{student_id}")
+def createstudent(student_id:int,student:New):
+    if student_id in students :
+        return{"error":"id exist"}
+    students[student_id]=student
+    return
+    students[students_id]
 
-    # get the quetion item with the given id
-    quetion = session.query(Question).get(id)
 
-    # if quetion item with given id exists, delete it from the database. Otherwise raise 404 error
-    if quetion:
-        session.delete(quetion)
-        session.commit()
-        session.close()
-    else:
-        raise HTTPException(status_code=404, detail=f"quetion item with id {id} not found")
 
-    return None
-
+@app.delete("/delete-student/{student_id}")
+def delete_student(student_id:int):
+    if student_id not in students :
+        return{"Erro":"student does not exist"}
+    del students[student_id]
+    return{"Message":"student deleted successfully"}
