@@ -13,3 +13,6 @@ Base = declarative_base()
 # Create SessionLocal class from sessionmaker factory
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 
+
+# Create the database
+Base.metadata.create_all(engine)
