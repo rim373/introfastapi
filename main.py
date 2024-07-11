@@ -18,12 +18,12 @@ app = FastAPI()
 
 
 @app.post("/q",response_model=QuestionRequest, status_code=status.HTTP_201_CREATED)
-async def create_question(q:QuestionRequest):
+def create_question(q:QuestionRequest):
       # create a new database session
     session = SessionLocal()
 
     # create an instance of the ToDo database model
-    qdb = Question(content = q.content )
+    qdb = Question(content = q.content , response =q.response )
 
     # add it to the session and commit it
     session.add(qdb)

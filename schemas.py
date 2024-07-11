@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel,Json
 from typing import Dict,List, Union
 
 
@@ -6,16 +6,14 @@ from typing import Dict,List, Union
 
 class ResponseItem(BaseModel):
     response: str
-    score: int = 0 
-    correct: str =""
-
-
+    correct: bool
 
 
 class QuestionRequest(BaseModel):
     content: str
-    response : Union[dict[int,ResponseItem], None] = None
+    response :Json
     class Config:
         orm_mode = True
+
 
 
