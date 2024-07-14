@@ -1,4 +1,4 @@
-from typing import Union,Optional,List
+from typing import Union,Optional,List,Annotated
 from fastapi import FastAPI, status , Depends ,HTTPException
 from sqlalchemy.orm import Session
 from database import *
@@ -14,59 +14,90 @@ Base.metadata.create_all(engine)
 
 
 # Initialize app
-app = FastAPI()
+app = FastAPI() 
 
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally :
+        db.close()
+
+db_dependency = Annotated[Session,Depends(get_db)]
 
 @app.post("/q",response_model=QuestionRequest, status_code=status.HTTP_201_CREATED)
-def create_question(q:QuestionRequest):
+def create_question(q:QuestionRequest,db:db_dependency):
       # create a new database session
-    session = SessionLocal()
+    #session = SessionLocal()
 
     # create an instance of the ToDo database model
-    qdb = Question(content = q.content , response =q.response )
+    qdb =Question(content = q.content)
 
     # add it to the session and commit it
-    session.add(qdb)
-    session.commit()
-    session.refresh(qdb)
-
+    db.add(qdb)
+    db.commit()
+    db.refresh(qdb)
+    for choice in q.choices :
+        choice_db =Response(response_text=choice.response_text,is_correct=choice.is_correct,question_id=qdb.id)
+        db.add(choice_db)
+    db.commit()
+    
     # close the session
-    session.close()
+    #session.close()
 
     # return the id
     return qdb
 
 
 @app.get("/",response_model = List[QuestionRequest])
-def read_all_questions():
-     # create a new database session
-    session = SessionLocal()
-
+def read_all_questions(db:db_dependency):
     # get all todo items
-    question_list = session.query(Question).all()
+    question_list = db.query(Question).all()
+    finaldict=dict()
+    for question in question_list :
 
-    # close the session
-    session.close()
+        response = db.query(Response).filter(Response.question_id == question.id).all()
 
-    return  question_list
+        response_dict=dict()
+        k=0
+        for i in response:
+            k+=1
+            res=dict()
+            res["response"]=i.response_text
+            res["is correct"]=i.is_correct
+            response_dict[k]=res
+        finaldict[question.content]=response_dict
+
+
+    return finaldict
+
+
 
 
 
 @app.get("/q/{id}")
-def read_question(id: int):
-     # create a new database session
-    session = SessionLocal()
-
+def read_question(id: int,db:db_dependency):
+   
     # get the quetions item with the given id
-    question = session.query(Question).filter(Question.id == id).first()
-
-    # close the session
-    session.close()
+    question = db.query(Question).get(id)
+    response = db.query(Response).filter(Response.question_id == id).all()
+    
 
     if not question:
         raise HTTPException(status_code=404, detail=f"the question with id {id} not found")
+    r=dict()
+    k=0
+    for i in response:
+        k+=1
+        res=dict()
+        res["response"]=i.response_text
+        res["is correct"]=i.is_correct
+        r[k]=res
+        
 
-    return question
+
+    return {"question":question.content,"responses":r}
 
 
 
@@ -99,77 +130,92 @@ def update_question(id: int, content: str):
 
 
 @app.put("/r/{id_question}/{id_response}")
-def update_response(id_question: int,id_response:int , newresponseitem: str):
+def update_response(id_question: int,id_response:int , newresponseitem: str,db:db_dependency):
 
 
-    # create a new database session
-    session = SessionLocal()
+ 
 
    # get the question item with the given id
-    question = session.query(Question).get(id_question)
+    question= db.query(Question).get(id_question)
+
+     # check if quetion item with given id exists. If not, raise exception and return 404 not found response
+    if not question :
+        raise HTTPException(status_code=404, detail=f"question item with id {id_question} not found")
+    
+    # get the question item with the given id
+    response = db.query(Response).filter(Response.question_id==id_question).all()
 
     # update question item with the given task (if an item with the given id was found)
-    if question:
-        question.response[id_response]["response"]= newresponseitem
-        session.commit()
+    test = "false"
+    if response:
+        for i in response:
+            if i.id == id_response:
+                test = "true"
+                i.response_text = newresponseitem
+                db.commit()
           
 
-    # close the session
-    session.close()
+   
 
-    # check if quetion item with given id exists. If not, raise exception and return 404 not found response
-    if not question  :
-        raise HTTPException(status_code=404, detail=f"question item with id {id_question} not found")
+
     if test=="false" :
         raise HTTPException(status_code=404, detail=f"response item with id {id_response} in the question {id_question} not found")
 
 
-    return question
+    return {"question":question.content,"response":newresponseitem}
 
 
 @app.delete("/q/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_quetion(id: int):
-
-    # create a new database session
-    session = SessionLocal()
+def delete_question(id: int,db:db_dependency):
 
     # get the quetion item with the given id
-    question = session.query(Question).get(id)
+    question = db.query(Question).get(id)
 
-    # if quetion item with given id exists, delete it from the database. Otherwise raise 404 error
+    # get the responses for the question with the given id
+    response=db.query(Response).filter(Response.question_id==id)
+
+    #delete responses related to this question
+    if response :
+        for i in response :
+            db.delete(i)
+            db.commit()
+
+    #delelte question with given id
     if question:
-        session.delete(question)
-        session.commit()
-        session.close()
+        db.delete(question)
+        db.commit()
+    
     else:
         raise HTTPException(status_code=404, detail=f"question item with id {id} not found")
 
-    return question
+    return None
 
 
 @app.delete("/res/{id_question}/{id_response}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_response(id_question: int,id_response:int):
+def delete_response(id_question: int,id_response:int,db:db_dependency):
 
-     # create a new database session
-     session = SessionLocal()
+    
+     # get  the question with the given id
+     question= db.query(Question).get(id_question)
 
-     # get the responses item for the question with the given id
-     question= session.query(Question).get(id_question)
+    # get the responses item for the question with the given id
+     response= db.query(Response).filter(Response.question_id==id_question).all()
+
      test = "false"
      # if question item with given id exists, delete it from the database. Otherwise raise 404 error
-     for i in question.response :
+     for i in response :
          if i.id == id_response :
              test = "true" 
-             session.delete(i)
-             session.commit()
-             session.close()
+             db.delete(i)
+             db.commit()
+             
      if not question  :
          raise HTTPException(status_code=404, detail=f"question item with id {id_question} not found")
      if test=="false" :
          raise HTTPException(status_code=404, detail=f"response item with id {id_response} in the question {id_question} not found")
 
 
-     return question
+     return f"response with id ={id_response} of the question {question.id} is delated"
 
 
 

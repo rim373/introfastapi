@@ -5,15 +5,13 @@ from typing import Dict,List, Union
 
 
 class ResponseItem(BaseModel):
-    response: str
-    correct: bool
+    response_text: str
+    is_correct: bool
 
 
 class QuestionRequest(BaseModel):
     content: str
-    response :Json
-    class Config:
-        orm_mode = True
+    choices : List[ResponseItem]
 
 
 
