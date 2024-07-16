@@ -54,23 +54,24 @@ def create_question(q:QuestionRequest,db:db_dependency):
 def read_all_questions(db:db_dependency):
     # get all todo items
     question_list = db.query(Question).all()
-    finaldict=dict()
+    finallist=[]
+    #k=0
     for question in question_list :
-
         response = db.query(Response).filter(Response.question_id == question.id).all()
-
-        response_dict=dict()
-        k=0
+        l=[]
         for i in response:
-            k+=1
-            res=dict()
-            res["response"]=i.response_text
-            res["is correct"]=i.is_correct
-            response_dict[k]=res
-        finaldict[question.content]=response_dict
+            res=ResponseItem
+            res.response_text=i.response_text
+            res.is_correct=i.is_correct
+            l.append(res)
+        qa=QuestionRequest
+        qa.content=question.content
+        qa.choices=l
+        
+        finallist.append(qa)
 
 
-    return finaldict
+    return finallist
 
 
 
