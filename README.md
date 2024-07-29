@@ -25,9 +25,9 @@ Questions Table:
 - **id**: A unique identifier for each question. (Primary Key)
 - **Content**: The text of the question.
 - **Responses**: {
-- - **id**: A unique identifier for each response. (Primary Key)
-- **response_text**: The text of the response.
-- **Is_correct**: A boolean indicating if the response is correct (`TRUE`) or incorrect (`FALSE`).}
+  - **id**: A unique identifier for each response. (Primary Key)
+  - **response_text**: The text of the response.
+  - **Is_correct**: A boolean indicating if the response is correct (`TRUE`) or incorrect (`FALSE`).}
 
 
 ## Problem and Solution
