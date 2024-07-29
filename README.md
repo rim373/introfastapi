@@ -22,41 +22,69 @@ this is the database table that i wanted to create:
 
 Questions Table:
 
-ID: A unique identifier for each question.
-Content: The text of the question.
-Responses dictionnary :{ID: A unique identifier for each response,
-                        Response : The text of the response,
-                        Is Correct: A boolean indicating if the response is correct}
-PROBLEM: SQLite does not support storing dictionaries directly within a table
-SOLUTION :Migration to PostgrSQL
-PROBLEM:PostgrSQL also does not support storing dictionaries directly within a table
-SOLUTION:Creation of two tables
+-**ID**: A unique identifier for each question.
+-**Content**: The text of the question.
+-**Responses**: {- **ID**: A unique identifier for each response.
+                 - **Response**: The text of the response.
+                 - **Is Correct**: A boolean indicating if the response is correct.}
 
-## Run Locally
 
-Clone the project
+## Problem and Solution
 
-```bash
-  git clone https://link-to-project
+### Problem with SQLite
+
+**Issue:** SQLite does not support storing dictionaries directly within a table.
+
+**Solution:** Migration to PostgreSQL, which provides more advanced relational database features.
+
+### Problem with PostgreSQL
+
+**Issue:** PostgreSQL also does not support storing dictionaries directly within a table.
+
+**Solution:** Creation of two related tables to represent the data structure effectively.
+
+
+
+
+## Database Schema
+
+### Tables
+
+#### `Questions` Table
+
+- **id**: A unique identifier for each question. (Primary Key)
+- **Content**: The text of the question.
+
+#### `Responses` Table
+
+- **id**: A unique identifier for each response. (Primary Key)
+- **question_id**: A foreign key linking each response to a question in the `Questions` table.
+- **response_text**: The text of the response.
+- **Is_correct**: A boolean indicating if the response is correct (`TRUE`) or incorrect (`FALSE`).
+
+### SQL Code
+
+To create the tables in PostgreSQL, use the following SQL commands:
+
+```sql
+-- Create the Questions table
+CREATE TABLE Questions (
+    id SERIAL PRIMARY KEY,
+    content TEXT 
+);
+
+-- Create the Responses table
+CREATE TABLE Responses (
+    id SERIAL PRIMARY KEY,
+    question_id INTEGER REFERENCES Questions(id) ON DELETE CASCADE,
+    response TEXT ,
+    is_correct BOOLEAN 
+);
 ```
 
-Go to the project directory
 
-```bash
-  cd my-project
-```
 
-Install dependencies
 
-```bash
-  npm install
-```
-
-Start the server
-
-```bash
-  npm run start
-```
 
 
 
