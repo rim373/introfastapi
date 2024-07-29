@@ -22,11 +22,11 @@ this is the database table that i wanted to create:
 
 Questions Table:
 
--**ID**: A unique identifier for each question.
--**Content**: The text of the question.
--**Responses**: {- **ID**: A unique identifier for each response.
-                 - **Response**: The text of the response.
-                 - **Is Correct**: A boolean indicating if the response is correct.}
+- **id**: A unique identifier for each question. (Primary Key)
+- **Content**: The text of the question.
+- **Responses**: {- **id**: A unique identifier for each response. (Primary Key)
+                  - **response_text**: The text of the response.
+                  - **Is_correct**: A boolean indicating if the response is correct (`TRUE`) or incorrect (`FALSE`).}
 
 
 ## Problem and Solution
