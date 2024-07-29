@@ -2,6 +2,8 @@
 ⚡ FastAPI for the Python backend API.
 💾 PostgreSQL as the SQL database.
 
+
+
 This is a project to learn APIs
 To execute this project :
 ```sh 
@@ -56,6 +58,9 @@ Questions Table:
 - **id**: A unique identifier for each question. (Primary Key)
 - **Content**: The text of the question.
 
+
+
+
 #### `Responses` Table
 
 - **id**: A unique identifier for each response. (Primary Key)
@@ -82,6 +87,18 @@ CREATE TABLE Responses (
     is_correct BOOLEAN 
 );
 ```
+
+## CRUD (Create, Read, Update, Delete):
+ operations for managing questions and their associated responses. It is built using FastAPI and interacts with a PostgreSQL database.
+```sh 
+# Initialize app
+app = FastAPI() 
+```
+
+
+
+
+
 
 
 
