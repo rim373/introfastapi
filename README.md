@@ -141,7 +141,7 @@ This endpoint updates the content of a question identified by its ID. It finds t
 ---
 
 #### Update a Response for a Question
-![docs](https://github.com/rim373/introfastapi/blob/main/pics/updateresponse.png)
+![docs](https://github.com/rim373/introfastapi/blob/main/pics/update%20response.png)
 
 **Description:** 
 This endpoint updates a specific response associated with a question. It locates the question and response in the database, updates the response text, and commits the change. If the question or response is not found, it raises a 404 HTTPException. It returns the updated response information.
