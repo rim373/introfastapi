@@ -94,7 +94,7 @@ CREATE TABLE Responses (
 # Initialize app
 app = FastAPI() 
 ```
-
+![CRUD]('introfastpi/pics/redoc.png')
 
 
 
