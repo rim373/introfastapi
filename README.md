@@ -133,7 +133,7 @@ This endpoint retrieves a specific question by its ID. It queries the database f
 ---
 
 #### Update a Question's Content
-![docs](https://github.com/rim373/introfastapi/blob/main/pics/updatequeston.png)
+![docs](https://github.com/rim373/introfastapi/blob/main/pics/updataqueston.png)
 
 **Description:** 
 This endpoint updates the content of a question identified by its ID. It finds the question in the database, updates its content, and commits the changes. If the question does not exist, it raises a 404 HTTPException. It returns the updated question.
