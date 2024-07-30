@@ -149,7 +149,7 @@ This endpoint updates a specific response associated with a question. It locates
 ---
 
 #### Delete a Question
-![docs](https://github.com/rim373/introfastapi/blob/main/pics/delquestion.png)
+![docs](https://github.com/rim373/introfastapi/blob/main/pics/del%20question.png)
 
 **Description:** 
 This endpoint deletes a question by its ID. It removes the question and all associated responses from the database. If the question does not exist, it raises a 404 HTTPException. It returns a 204 No Content status upon successful deletion.
@@ -157,7 +157,7 @@ This endpoint deletes a question by its ID. It removes the question and all asso
 ---
 
 #### Delete a Specific Response
-![docs](https://github.com/rim373/introfastapi/blob/main/pics/delaterespnse.png)
+![docs](https://github.com/rim373/introfastapi/blob/main/pics/delate%20respnse.png)
 
 **Description:** 
 This endpoint deletes a specific response associated with a question. It locates the question and the response to be deleted, removes the response from the database, and commits the change. If the question or response is not found, it raises a 404 HTTPException. It returns a confirmation message upon successful deletion.
