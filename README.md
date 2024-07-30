@@ -94,7 +94,79 @@ CREATE TABLE Responses (
 # Initialize app
 app = FastAPI() 
 ```
-![CRUD](https://github.com/rim373/introfastapi/blob/main/pics/redoc.png)
+![redoc](https://github.com/rim373/introfastapi/blob/main/pics/redoc.png)
+
+##Interactive API Documentation
+
+![docs](https://github.com/rim373/introfastapi/blob/main/pics/docs.png)
+
+
+Here's a brief description for each function :
+
+---
+
+### API Endpoints
+
+#### Create a New Question
+
+![docs](https://github.com/rim373/introfastapi/blob/main/pics/post.png)
+
+**Description:** 
+This endpoint creates a new question in the database. It receives a `QuestionRequest` object containing the question content and associated responses. It adds the question to the database, commits the transaction, and then associates each response with the newly created question before committing again. It returns the created question object.
+
+---
+
+#### Read All Questions
+![docs](https://github.com/rim373/introfastapi/blob/main/pics/affichetot.png)
+
+**Description:** 
+This endpoint retrieves all questions from the database. It queries for all questions and their associated responses, then constructs a list of `QuestionRequest` objects with the content and choices. It returns this list.
+
+---
+
+#### Read a Single Question by ID
+![docs](https://github.com/rim373/introfastapi/blob/main/pics/affiche.png)
+
+**Description:** 
+This endpoint retrieves a specific question by its ID. It queries the database for the question and its associated responses. If found, it returns the question content along with a dictionary of responses. If the question does not exist, it raises a 404 HTTPException.
+
+---
+
+#### Update a Question's Content
+![docs](https://github.com/rim373/introfastapi/blob/main/pics/updatequeston.png)
+
+**Description:** 
+This endpoint updates the content of a question identified by its ID. It finds the question in the database, updates its content, and commits the changes. If the question does not exist, it raises a 404 HTTPException. It returns the updated question.
+
+---
+
+#### Update a Response for a Question
+![docs](https://github.com/rim373/introfastapi/blob/main/pics/updateresponse.png)
+
+**Description:** 
+This endpoint updates a specific response associated with a question. It locates the question and response in the database, updates the response text, and commits the change. If the question or response is not found, it raises a 404 HTTPException. It returns the updated response information.
+
+---
+
+#### Delete a Question
+![docs](https://github.com/rim373/introfastapi/blob/main/pics/delquestion.png)
+
+**Description:** 
+This endpoint deletes a question by its ID. It removes the question and all associated responses from the database. If the question does not exist, it raises a 404 HTTPException. It returns a 204 No Content status upon successful deletion.
+
+---
+
+#### Delete a Specific Response
+![docs](https://github.com/rim373/introfastapi/blob/main/pics/delaterespnse.png)
+
+**Description:** 
+This endpoint deletes a specific response associated with a question. It locates the question and the response to be deleted, removes the response from the database, and commits the change. If the question or response is not found, it raises a 404 HTTPException. It returns a confirmation message upon successful deletion.
+
+
+
+
+
+
 
 
 
