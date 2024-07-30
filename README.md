@@ -7,7 +7,7 @@
 This is a project to learn APIs
 To execute this project :
 ```sh 
-fastapi dev main.py
+pip install fastapi
 ```
 
 
@@ -93,6 +93,9 @@ CREATE TABLE Responses (
 ```sh 
 # Initialize app
 app = FastAPI() 
+```
+```sh 
+fastapi dev main.py
 ```
 ![redoc](https://github.com/rim373/introfastapi/blob/main/pics/redoc.png)
 
