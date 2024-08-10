@@ -1,6 +1,7 @@
 from typing import Union,Optional,List,Annotated
-from fastapi import FastAPI, status , Depends ,HTTPException
+from fastapi import FastAPI, status , Depends ,HTTPException,UploadFile,File
 from sqlalchemy.orm import Session
+import base64
 from database import *
 from models import *
 from schemas import *
@@ -25,30 +26,121 @@ def get_db():
         db.close()
 
 db_dependency = Annotated[Session,Depends(get_db)]
+ 
+
+
+
+
+
+def render_picture(data: bytes) -> str:
+    return base64.b64encode(data).decode('ascii')
+
+
+
+
+@app.post("/upload", status_code=status.HTTP_201_CREATED)
+async def upload( db:db_dependency,image_question: int, pic :UploadFile = File(...)):
+
+    question = db.query(Question).filter(Question.id == image_question).first()
+    if not question  :
+        raise HTTPException(status_code=404, detail=f"the question with id {image_question} not found")
+    else:
+        
+    
+        # Read the file data
+        data = await pic.read()
+    
+    
+        # Render picture data
+        render_file = render_picture(data)
+    
+        # Create a new file record
+    
+        filedb = ImageTable(data=data,rendered_data=render_file,name=pic.filename,image_question=image_question)
+        
+        db.add(filedb)
+        db.commit()
+        db.refresh(filedb)
+    
+
+    
+    return None
+    
 
 @app.post("/q",response_model=QuestionRequest, status_code=status.HTTP_201_CREATED)
-def create_question(q:QuestionRequest,db:db_dependency):
+async def create_question(q:QuestionRequest, db:db_dependency , pic :UploadFile = File(...) ):
       # create a new database session
     #session = SessionLocal()
 
-    # create an instance of the ToDo database model
+    # create an instance of the question database model
     qdb =Question(content = q.content)
 
     # add it to the session and commit it
     db.add(qdb)
     db.commit()
     db.refresh(qdb)
+
+
+    # Read the file data
+    data = await pic.read()
+    
+    
+    # Render picture data
+    render_file = render_picture(data)
+    
+    # Create a new file record
+    
+    filedb = ImageTable(data=data,rendered_data=render_file,name=pic.filename,image_question=q.id)
+        
+    db.add(filedb)
+    db.commit()
+    db.refresh(filedb)
+
+    
+
     for choice in q.choices :
         choice_db =Response(response_text=choice.response_text,is_correct=choice.is_correct,question_id=qdb.id)
         db.add(choice_db)
     db.commit()
     
+    
+    
     # close the session
     #session.close()
 
     # return the id
-    return qdb
+    return qdb , filedb
 
+
+@app.post("/test",response_model=QuestionRequest, status_code=status.HTTP_201_CREATED)
+async def create_question(q:QuestionRequest, db:db_dependency  ):
+      # create a new database session
+    #session = SessionLocal()
+
+    # create an instance of the question database model
+    qdb =Question(content = q.content)
+
+    # add it to the session and commit it
+    db.add(qdb)
+    db.commit()
+    db.refresh(qdb)
+
+
+   
+    
+
+    for choice in q.choices :
+        choice_db =Response(response_text=choice.response_text,is_correct=choice.is_correct,question_id=qdb.id)
+        db.add(choice_db)
+    db.commit()
+    
+    question = db.query(Question).filter(Question.content == q.content).first()
+    
+    # close the session
+    #session.close()
+
+    return question.content
+   
 
 @app.get("/",response_model = List[QuestionRequest])
 def read_all_questions(db:db_dependency):
@@ -222,6 +314,18 @@ def delete_response(id_question: int,id_response:int,db:db_dependency):
 
 
 
+'''@app.post("/q/pic",response_model=QuestionRequest, status_code=status.HTTP_201_CREATED)
+async def add_image( db:db_dependency,file: UploadFile = File(...),img: ImageItem):
+    content = await file.read()
+    if file.content_type not in ['image/jpeg', 'image/png']:
+        raise HTTPException(status_code=406, detail="Only .jpeg or .png  files allowed")
+    file_name = f'{uuid.uuid4().hex}{ext}'
+    
+ 
+    async with aiofiles.open(file_name, "wb") as f:
+        await f.write(content)
+    query = product.insert().values(title=payload.name, description=payload.description, image=????????)
+    return await database.execute(query=query)'''
 
 
 """ 

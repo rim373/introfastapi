@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String , ForeignKey,Boolean
+from sqlalchemy import create_engine, Column, Integer, String , ForeignKey,Boolean,LargeBinary
 from sqlalchemy.orm import Session,sessionmaker , relationship
 from sqlalchemy.ext.declarative import declarative_base
 from database import Base
@@ -22,5 +22,11 @@ class Response(Base):
 
 
 
-
-
+# Define image class inheriting from Base
+class ImageTable(Base):
+    __tablename__ = 'Image'
+    id = Column(Integer, primary_key=True, index=True)
+    data = Column(LargeBinary,nullable=False)
+    rendered_data = Column(String,nullable=False)
+    name = Column(String)
+    image_question = Column(Integer,ForeignKey("Questions.id"))
