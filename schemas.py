@@ -19,5 +19,10 @@ class QuestionRequest(BaseModel):
     #image: Optional[ImageItem] = None
 
 
+class UserItem(BaseModel):
+    cin : int
+    full_name : str
+    Email : str 
+    password : str 
 
 

@@ -1,11 +1,16 @@
 from typing import Union,Optional,List,Annotated
-from fastapi import FastAPI, status , Depends ,HTTPException,UploadFile,File
+from fastapi import FastAPI, status , Depends ,HTTPException,UploadFile,File,Form
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import DataError
+from passlib.context import CryptContext
+from fastapi.middleware.cors import CORSMiddleware
 import base64
 from database import *
 from models import *
 from schemas import *
-# from pydantic import BaseModel 
+
+import threading
+
 
 
 
@@ -17,16 +22,48 @@ Base.metadata.create_all(engine)
 # Initialize app
 app = FastAPI() 
 
+origins = ['http://localhost:3000']
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally :
-        db.close()
+app.add_middleware(CORSMiddleware,allow_origins=origins,)
+
+
 
 db_dependency = Annotated[Session,Depends(get_db)]
- 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+def verify_pwd(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+def get_user(db, cin: int):
+    if username in db:
+        user_dict = db[username]
+        return UserInDB(**user_dict)
+
+@app.post("/login/" ,tags = ['login'])
+async def login(request : UserItem , db:db_dependency):
+    user= db.query(UserTable).filter(UserTable.cin == request.cin)
+    if not user : 
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = f"invalid user" )
+    if not verify_pwd(request.password,user.password) :
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = f"invalid password" )
+    return none
+
+
+@app.post("/User",response_model=UserItem, status_code=status.HTTP_201_CREATED, tags = ['users'])
+def create_user(u:UserItem, db:db_dependency ):
+    hashedpwd =pwd_context.hash(u.password)
+    # create an instance of the user database model
+    userdb =UserTable(cin = u.cin , full_name = u.full_name , Email = u.Email , password =hashedpwd)
+
+    # add it to the session and commit it
+    db.add(userdb)
+    db.commit()
+    db.refresh(userdb)
+    
+    return userdb 
 
 
 
@@ -38,39 +75,36 @@ def render_picture(data: bytes) -> str:
 
 
 
-@app.post("/upload", status_code=status.HTTP_201_CREATED)
-async def upload( db:db_dependency,image_question: int, pic :UploadFile = File(...)):
-
-    question = db.query(Question).filter(Question.id == image_question).first()
-    if not question  :
-        raise HTTPException(status_code=404, detail=f"the question with id {image_question} not found")
-    else:
-        
-    
-        # Read the file data
-        data = await pic.read()
-    
-    
-        # Render picture data
-        render_file = render_picture(data)
-    
-        # Create a new file record
-    
-        filedb = ImageTable(data=data,rendered_data=render_file,name=pic.filename,image_question=image_question)
-        
-        db.add(filedb)
-        db.commit()
-        db.refresh(filedb)
+""" @app.post("/test",response_model=QuestionRequest, status_code=status.HTTP_201_CREATED , tags = ['QA'])
+async def create_question_pic(q:QuestionRequest,db:db_dependency, pic :UploadFile = File(...)):
     
 
-    
-    return None
-    
+    thread = threading.Thread(target=create_question, args=(q,db,))
 
-@app.post("/q",response_model=QuestionRequest, status_code=status.HTTP_201_CREATED)
-async def create_question(q:QuestionRequest, db:db_dependency , pic :UploadFile = File(...) ):
-      # create a new database session
-    #session = SessionLocal()
+    # Start the thread
+    thread.start()
+
+    # Wait for the thread to finish
+    thread.join()
+
+
+   # qdb = db.query(Question).filter(Question.content == q.id).first()
+
+    #thread1 = threading.Thread(target=upload, args=(db,qdb.id, pic ,))
+
+    # Start the thread
+    #thread1.start()
+
+    # Wait for the thread to finish
+   # thread1.join()
+     
+    return None  """
+
+
+
+
+@app.post("/q",response_model=QuestionRequest, status_code=status.HTTP_201_CREATED ,tags = ['QA'])
+def create_question(q:QuestionRequest, db:db_dependency ):
 
     # create an instance of the question database model
     qdb =Question(content = q.content)
@@ -79,72 +113,26 @@ async def create_question(q:QuestionRequest, db:db_dependency , pic :UploadFile 
     db.add(qdb)
     db.commit()
     db.refresh(qdb)
-
-
-    # Read the file data
-    data = await pic.read()
     
-    
-    # Render picture data
-    render_file = render_picture(data)
-    
-    # Create a new file record
-    
-    filedb = ImageTable(data=data,rendered_data=render_file,name=pic.filename,image_question=q.id)
-        
-    db.add(filedb)
-    db.commit()
-    db.refresh(filedb)
-
-    
-
+    # create an instance of the responses database model
     for choice in q.choices :
         choice_db =Response(response_text=choice.response_text,is_correct=choice.is_correct,question_id=qdb.id)
         db.add(choice_db)
     db.commit()
     
     
-    
-    # close the session
-    #session.close()
+    return qdb 
 
-    # return the id
-    return qdb , filedb
-
-
-@app.post("/test",response_model=QuestionRequest, status_code=status.HTTP_201_CREATED)
-async def create_question(q:QuestionRequest, db:db_dependency  ):
-      # create a new database session
-    #session = SessionLocal()
-
-    # create an instance of the question database model
-    qdb =Question(content = q.content)
-
-    # add it to the session and commit it
-    db.add(qdb)
-    db.commit()
-    db.refresh(qdb)
-
-
+@app.get("/users", tags = ['users'])
+def get_users(db:db_dependency):
    
-    
+    # get the user items 
+    userlist = db.query(UserTable).all()
+    return userlist 
 
-    for choice in q.choices :
-        choice_db =Response(response_text=choice.response_text,is_correct=choice.is_correct,question_id=qdb.id)
-        db.add(choice_db)
-    db.commit()
-    
-    question = db.query(Question).filter(Question.content == q.content).first()
-    
-    # close the session
-    #session.close()
-
-    return question.content
-   
-
-@app.get("/",response_model = List[QuestionRequest])
+@app.get("/",response_model = List[QuestionRequest], tags = ['QA'])
 def read_all_questions(db:db_dependency):
-    # get all todo items
+    # get all questions
     question_list = db.query(Question).all()
     finallist=[]
     #k=0
@@ -169,7 +157,7 @@ def read_all_questions(db:db_dependency):
 
 
 
-@app.get("/q/{id}")
+@app.get("/q/{id}/", tags = ['QA'])
 def read_question(id: int,db:db_dependency):
    
     # get the quetions item with the given id
@@ -197,7 +185,7 @@ def read_question(id: int,db:db_dependency):
     
    
 
-@app.put("/q/{id}")
+@app.put("/q/{id}", tags = ['QA'])
 def update_question(id: int, content: str):
 
     # create a new database session
@@ -222,7 +210,7 @@ def update_question(id: int, content: str):
 
 
 
-@app.put("/r/{id_question}/{id_response}")
+@app.put("/r/{id_question}/{id_response}", tags = ['QA'])
 def update_response(id_question: int,id_response:int , newresponseitem: str,db:db_dependency):
 
 
@@ -258,7 +246,43 @@ def update_response(id_question: int,id_response:int , newresponseitem: str,db:d
     return {"question":question.content,"response":newresponseitem}
 
 
-@app.delete("/q/{id}", status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.put("/upload", status_code=status.HTTP_201_CREATED, tags = ['QA'])
+async def upload( db:db_dependency,image_question: int = 0, pic :UploadFile = File(...)):
+
+    question = db.query(Question).filter(Question.id == image_question).first()
+    if not question  :
+        raise HTTPException(status_code=404, detail=f"the question with id {image_question} not found")
+    else:
+        
+    
+        # Read the file data
+        data = await pic.read()
+    
+    
+        # Render picture data
+        render_file = render_picture(data)
+    
+        # Create a new file record
+    
+        filedb = ImageTable(data=data,rendered_data=render_file,name=pic.filename,image_question=image_question)
+        
+        db.add(filedb)
+        try:
+            db.commit()
+            db.refresh(filedb)
+        except DataError as e:
+            db.rollback()  # Rollback the transaction in case of an error
+            return f"Error inserting data: {e}"
+        
+    
+
+    asyncio.sleep(10)
+    return None
+
+
+@app.delete("/q/{id}", status_code=status.HTTP_204_NO_CONTENT, tags = ['QA'])
 def delete_question(id: int,db:db_dependency):
 
     # get the quetion item with the given id
@@ -284,7 +308,7 @@ def delete_question(id: int,db:db_dependency):
     return None
 
 
-@app.delete("/res/{id_question}/{id_response}", status_code=status.HTTP_204_NO_CONTENT)
+@app.delete("/res/{id_question}/{id_response}", status_code=status.HTTP_204_NO_CONTENT, tags = ['QA'])
 def delete_response(id_question: int,id_response:int,db:db_dependency):
 
     
